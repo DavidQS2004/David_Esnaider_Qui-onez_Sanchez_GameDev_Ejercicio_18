@@ -1,0 +1,36 @@
+-- Consultas SISTEMA DE GESTIÓN PARA INDUSTRIA DE VIDEOJUEGOS "GAMEDEV"
+
+-- 1.	¿Cuáles son todas las tareas de un proyecto específico?
+
+SELECT * FROM tareas WHERE ID_Videojuego = 2;
+
+-- 2.	¿Qué bugs tienen prioridad menor a 3?
+
+SELECT * FROM bugs_reportados WHERE prioridad <3;
+
+-- 3.	¿Cuáles son los assets gráficos de tipo Personaje con resolución 4K?
+
+SELECT * FROM asset_grafico WHERE resolucion_asset = '4K';
+
+-- 4.	¿Qué empleados son artistas o diseñadores?
+
+SELECT * FROM miembros_equipo WHERE Especialidad = 'Arte' or especialidad = 'diseno';
+
+-- 5.	¿Cuáles son las versiones de prueba compiladas en febrero de 2024?
+
+SELECT * FROM versiones_prueba WHERE fecha_compilacion BETWEEN '2024-02-01 00:00:00' AND '2024-02-28 11:59:59';
+
+-- 6.	¿Qué videojuegos son de género Acción, Aventura o RPG?
+
+SELECT * FROM videojuegos WHERE genero = 'accion' OR genero = 'aventura' OR genero = 'rpg';
+
+-- 7.	¿Cuáles son los códigos fuente con descripciones que contienen "inteligencia artificial" o "pathfinding"?
+
+SELECT * FROM codigo_fuente WHERE nombre_codigo_fuente = 'EnemyAI' OR nombre_codigo_fuente = 'pathfinding' OR nombre_codigo_fuente = 'inteligencia artificial';
+
+-- 8.	¿Qué tareas no tienen fecha de finalización?
+
+SELECT * FROM tareas WHERE Fecha_Limite_Tarea IS NULL ;
+
+-- 9.	¿Cuáles son los bugs ordenados por severidad descendente y fecha ascendente?
+SELECT * FROM bugs_reportados ORDER BY severidad desc, fecha_reporte asc;
