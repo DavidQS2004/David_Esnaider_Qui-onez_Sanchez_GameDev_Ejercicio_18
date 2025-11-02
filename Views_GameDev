@@ -1,0 +1,147 @@
+-- Muestra tareas pendientes asignadas a cada desarrollador.
+
+
+CREATE  VIEW Vw_Tareas_Pendientes_Desarrollador AS
+SELECT
+    ME.ID_Miembros_Equipo AS ID_Desarrollador,
+    ME.Nombre,
+    ME.Apellido,
+    T.ID_Tareas,
+    T.Descripcion_Tarea,
+    T.Estado,
+    T.Prioridad,
+    T.Fecha_Limite_Tarea,
+    V.Titulo AS Titulo_Videojuego
+FROM
+    Miembros_Equipo ME
+JOIN
+    Tareas T ON ME.ID_Miembros_Equipo = T.Responsable 
+JOIN
+    Videojuegos V ON T.ID_Videojuego = V.ID_Videojuego
+WHERE
+    T.Estado IN ('Pendiente', 'En proceso', 'Revision');
+
+
+-- Lista bugs activos ordenados por prioridad y severidad.
+
+USE GameDev_DB;
+
+CREATE OR REPLACE VIEW Vw_Bugs_Activos_Priorizados AS
+SELECT
+    BR.Numero_Ticket,
+    BR.Descripcion,
+    BR.Severidad,
+    BR.Prioridad,
+    BR.Estado_Resolucion,
+    BR.Tester_Reporta,
+    BR.Desarrollador_Asignado,
+    VP.Proyecto_Version_Prueba AS Proyecto_Afectado
+FROM
+    Bugs_Reportados BR
+JOIN
+    Versiones_Prueba VP ON BR.ID_Version_Afectada = VP.ID_Version_Prueba
+WHERE
+    BR.Estado_Resolucion IN ('Reportado', 'Asignado', 'En Progreso', 'Revision')
+ORDER BY
+    BR.Prioridad DESC,
+    FIELD(BR.Severidad, 'Critica', 'Alta', 'Media', 'Baja'), 
+    BR.Fecha_Reporte ASC;
+
+
+-- Detalla el avance general de cada proyecto en desarrollo.
+
+USE GameDev_DB;
+
+CREATE OR REPLACE VIEW Vw_Avance_Proyectos_Desarrollo AS
+SELECT
+    V.ID_Videojuego,
+    V.Titulo,
+    V.Estado_Actual,
+    V.Fecha_Inicio_Desarrollo_Videojuego,
+    V.Fecha_Lanzamiento_Prevista_Videojuego,
+    COUNT(T.ID_Tareas) AS Total_Tareas,
+    SUM(CASE WHEN T.Estado = 'Completada' THEN 1 ELSE 0 END) AS Tareas_Completadas,
+    
+    COALESCE(
+        ROUND( (SUM(CASE WHEN T.Estado = 'Completada' THEN 1 ELSE 0 END) / COUNT(T.ID_Tareas)) * 100, 2),
+        0.00
+    ) AS Porcentaje_Avance_Calculado
+FROM
+    Videojuegos V
+LEFT JOIN 
+    Tareas T ON V.ID_Videojuego = T.ID_Videojuego
+WHERE
+    V.Estado_Actual IN ('En desarrollo', 'Pendiente', 'Revision') 
+GROUP BY
+    V.ID_Videojuego, V.Titulo, V.Estado_Actual, V.Fecha_Inicio_Desarrollo_Videojuego, V.Fecha_Lanzamiento_Prevista_Videojuego
+ORDER BY
+    Porcentaje_Avance_Calculado DESC,
+    V.Titulo ASC;
+
+
+-- Catálogo de assets aprobados por tipo y proyecto.
+
+ALTER TABLE Asset_Grafico ADD COLUMN ID_Videojuego INT(10) NULL;
+ALTER TABLE Asset_Grafico ADD CONSTRAINT fk_asset_videojuego FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego);
+
+USE GameDev_DB;
+
+CREATE OR REPLACE VIEW Catalogo_Assets_Aprobados AS
+SELECT
+    AG.ID_Asset_Grafico,
+    AG.Codigo_Unico_Asset,
+    AG.Nombre_Asset,
+    AG.Tipo_Asset,
+    AG.Formato_Asset,
+    AG.Resolucion_Asset,
+    AG.Artista_Responsable_Asset,
+    AG.Version_Actual_Asset,
+    AG.Estado_Aprobacion_Asset,
+    V.Titulo AS Titulo_Videojuego,
+    V.ID_Videojuego
+FROM
+    Asset_Grafico AG
+JOIN
+    Videojuegos V ON AG.ID_Videojuego = V.ID_Videojuego
+WHERE
+    AG.Estado_Aprobacion_Asset IN ('Aprobado', 'Aprobada', 'Finalizado', 'Listo para usar') 
+ORDER BY
+    V.Titulo,
+    AG.Tipo_Asset,
+    AG.Nombre_Asset;
+
+-- Historial de versiones de prueba con sus características y bugs.
+
+USE GameDev_DB;
+
+CREATE OR REPLACE VIEW Vista_Historial_Versiones_Detallado AS
+SELECT
+    VP.ID_Version_Prueba,
+    V.Titulo AS Titulo_Videojuego,
+    VP.Numero_Version,
+    VP.Fecha_Compilacion,
+    VP.Plataforma_Version_Prueba,
+    VP.Caracteristicas_Implementadas,
+    COUNT(BR.ID_Bugs_Reportados) AS Total_Bugs_Reportados,
+    SUM(CASE WHEN BR.Estado_Resolucion IN ('Resuelto', 'Verificado', 'Cerrado') THEN 1 ELSE 0 END) AS Bugs_Resueltos,
+    SUM(CASE WHEN BR.Estado_Resolucion IN ('Reportado', 'Asignado', 'En Progreso', 'Revision') THEN 1 ELSE 0 END) AS Bugs_Activos,
+    VP.Nota_Testers,
+    VP.Bugs_Conocidos 
+FROM
+    Versiones_Prueba VP
+JOIN
+    Videojuegos V ON VP.ID_Videojuego = V.ID_Videojuego
+LEFT JOIN 
+    Bugs_Reportados BR ON VP.ID_Version_Afectada = BR.ID_Version_Afectada
+GROUP BY
+    VP.ID_Version_Prueba, 
+    V.Titulo, 
+    VP.Numero_Version, 
+    VP.Fecha_Compilacion, 
+    VP.Plataforma_Version_Prueba, 
+    VP.Caracteristicas_Implementadas, 
+    VP.Nota_Testers,
+    VP.Bugs_Conocidos
+ORDER BY
+    VP.Fecha_Compilacion DESC,
+    VP.Numero_Version DESC;
