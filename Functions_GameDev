@@ -1,0 +1,216 @@
+-- Calcula el tiempo estimado para completar una tarea.
+
+DELIMITER //
+
+CREATE FUNCTION CalcularTiempoEstimadoRestante(p_id_tarea INT) RETURNS DECIMAL(10, 2)
+DETERMINISTIC 
+BEGIN
+    DECLARE fecha_limite TIMESTAMP;
+    DECLARE estado_tarea ENUM('Pendiente', 'En proceso', 'Revision', 'Completada');
+    DECLARE dias_restantes DECIMAL(10, 2);
+
+   
+    SELECT 
+        Fecha_Limite_Tarea, 
+        Estado 
+    INTO 
+        fecha_limite, 
+        estado_tarea
+    FROM 
+        Tareas
+    WHERE 
+        ID_Tareas = p_id_tarea;
+
+    
+    IF estado_tarea = 'Completada' OR fecha_limite IS NULL THEN
+        SET dias_restantes = 0.00;
+    ELSE
+        
+        SET dias_restantes = TIMESTAMPDIFF(SECOND, NOW(), fecha_limite) / 86400.0;
+        
+        
+    END IF;
+
+    RETURN dias_restantes;
+END //
+
+DELIMITER ;
+
+-- Determina las dependencias de una tarea específica.
+
+DELIMITER //
+
+CREATE FUNCTION ObtenerDependencias(p_id_tarea INT) RETURNS VARCHAR(20)
+DETERMINISTIC 
+BEGIN
+    DECLARE dependencias_str VARCHAR(20);
+
+    
+    SELECT 
+        Dependencias 
+    INTO 
+        dependencias_str
+    FROM 
+        Tareas
+    WHERE 
+        ID_Tareas = p_id_tarea;
+        
+   
+    IF dependencias_str IS NULL OR dependencias_str = '' THEN
+        RETURN 'Ninguna';
+    ELSE
+        RETURN dependencias_str;
+    END IF;
+    
+END //
+
+DELIMITER ;
+
+-- Calcula la velocidad de desarrollo de un equipo específico.
+
+DELIMITER //
+
+CREATE FUNCTION CalcularVelocidadDesarrollo(p_id_equipo INT) RETURNS DECIMAL(10, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE total_tareas_completadas INT;
+    DECLARE velocidad_promedio DECIMAL(10, 2);
+    DECLARE dias_periodo INT DEFAULT 30;
+
+    
+    SELECT 
+        COUNT(ID_Tareas)
+    INTO 
+        total_tareas_completadas
+    FROM 
+        Tareas
+    WHERE 
+        Responsable = p_id_equipo
+        AND Estado = 'Completada'AND Fecha_Asignacion_Tarea >= DATE_SUB(NOW(), INTERVAL dias_periodo DAY);
+
+    
+    IF total_tareas_completadas > 0 THEN
+        SET velocidad_promedio = total_tareas_completadas / dias_periodo;
+    ELSE
+        SET velocidad_promedio = 0.00;
+    END IF;
+
+    RETURN velocidad_promedio;
+END //
+
+DELIMITER ;
+
+
+-- Estima la fecha de entrega de un proyecto según avance.
+
+DELIMITER //
+
+CREATE FUNCTION EstimarFechaEntregaProyecto(p_id_videojuego INT) RETURNS DATE
+DETERMINISTIC
+BEGIN
+    DECLARE porcentaje_avance DECIMAL(5,2);
+    DECLARE dias_transcurridos INT;
+    DECLARE dias_restantes_estimados INT;
+    DECLARE fecha_inicio TIMESTAMP;
+    DECLARE fecha_estimada DATE;
+    DECLARE total_tareas INT;
+    DECLARE tareas_completadas INT;
+
+    
+    SELECT 
+        Fecha_Inicio_Desarrollo_Videojuego
+    INTO 
+        fecha_inicio
+    FROM 
+        Videojuegos
+    WHERE 
+        ID_Videojuego = p_id_videojuego;
+
+    
+    SELECT 
+        COUNT(ID_Tareas),
+        SUM(CASE WHEN Estado = 'Completada' THEN 1 ELSE 0 END)
+    INTO
+        total_tareas,
+        tareas_completadas
+    FROM
+        Tareas
+    WHERE
+        ID_Videojuego = p_id_videojuego;
+
+    IF total_tareas = 0 OR fecha_inicio IS NULL THEN
+        RETURN NULL; 
+    END IF;
+
+    SET porcentaje_avance = (tareas_completadas / total_tareas) * 100;
+    SET dias_transcurridos = DATEDIFF(CURDATE(), fecha_inicio);
+
+    
+    IF porcentaje_avance >= 100.00 THEN
+        
+        SET fecha_estimada = CURDATE();
+    ELSEIF porcentaje_avance > 0 AND dias_transcurridos > 0 THEN
+        
+        SET dias_restantes_estimados = (dias_transcurridos / (porcentaje_avance / 100.0)) - dias_transcurridos;
+        
+        
+        SET fecha_estimada = DATE_ADD(CURDATE(), INTERVAL dias_restantes_estimados DAY);
+    ELSE
+        RETURN NULL;
+    END IF;
+
+    RETURN fecha_estimada;
+END //
+
+DELIMITER ;
+
+
+-- Calcula el ratio de resolución de bugs por desarrollador.
+
+DELIMITER //
+
+CREATE FUNCTION CalcularRatioResolucionBugs(
+    p_nombre VARCHAR(30), 
+    p_apellido VARCHAR(30)
+) RETURNS DECIMAL(5, 2)
+DETERMINISTIC
+BEGIN
+    DECLARE total_bugs_asignados INT;
+    DECLARE total_bugs_resueltos INT;
+    DECLARE ratio DECIMAL(5, 2);
+    DECLARE nombre_completo_param VARCHAR(60);
+
+    SET nombre_completo_param = CONCAT(p_nombre, ' ', p_apellido);
+
+    
+    SELECT 
+        COUNT(ID_Bugs_Reportados) 
+    INTO 
+        total_bugs_asignados
+    FROM 
+        Bugs_Reportados
+    WHERE 
+        Desarrollador_Asignado = nombre_completo_param; 
+
+    
+    SELECT 
+        COUNT(ID_Bugs_Reportados) 
+    INTO 
+        total_bugs_resueltos
+    FROM 
+        Bugs_Reportados
+    WHERE 
+        Desarrollador_Asignado = nombre_completo_param
+        AND Estado_Resolucion IN ('Resuelto', 'Verificado', 'Cerrado');
+
+   
+    IF total_bugs_asignados > 0 THEN
+        SET ratio = (total_bugs_resueltos / total_bugs_asignados) * 100;
+    ELSE
+        SET ratio = 0.00;
+    END IF;
+
+    RETURN ratio;
+END //
+
+DELIMITER ;
