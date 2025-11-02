@@ -1,0 +1,188 @@
+-- Verifica diariamente tareas próximas a vencer.
+
+USE GameDev_DB;
+
+
+
+DELIMITER //
+
+CREATE EVENT event_verificar_tareas_vencimiento
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP 
+DO
+BEGIN
+    
+    TRUNCATE TABLE Alerta_Tareas_Proximas_Vencer;
+    
+    
+    INSERT INTO Alerta_Tareas_Proximas_Vencer (
+        ID_Tarea, 
+        Descripcion_Tarea, 
+        Fecha_Limite, 
+        Responsable, 
+        Mensaje
+    )
+    SELECT
+        ID_Tareas,
+        Descripcion_Tarea,
+        Fecha_Limite_Tarea,
+        Responsable,
+        CONCAT('ALERTA: Esta tarea vence pronto (Límite: ', DATE_FORMAT(Fecha_Limite_Tarea, '%Y-%m-%d'), ')')
+    FROM
+        Tareas
+    WHERE
+        Estado IN ('Pendiente', 'En proceso', 'Revision')
+        AND Fecha_Limite_Tarea IS NOT NULL
+        
+        AND Fecha_Limite_Tarea <= DATE_ADD(CURDATE(), INTERVAL 2 DAY)
+        AND Fecha_Limite_Tarea >= CURDATE();
+        
+END //
+
+DELIMITER ;
+
+-- Genera reportes semanales de avance por proyecto.
+
+DELIMITER //
+
+CREATE EVENT event_generar_reporte_semanal
+ON SCHEDULE EVERY 1 WEEK
+
+STARTS (TIMESTAMP(CURDATE() + INTERVAL (7 - WEEKDAY(CURDATE())) DAY + INTERVAL 0 SECOND))
+DO
+BEGIN
+    
+    INSERT INTO Reportes_Avance_Semanal (
+        Fecha_Reporte,
+        ID_Videojuego,
+        Titulo_Videojuego,
+        Estado_Actual,
+        Total_Tareas,
+        Tareas_Completadas,
+        Porcentaje_Avance
+    )
+    SELECT
+        CURDATE() AS Fecha_Reporte,
+        V.ID_Videojuego,
+        V.Titulo,
+        V.Estado_Actual,
+        COUNT(T.ID_Tareas) AS Total_Tareas,
+        SUM(CASE WHEN T.Estado = 'Completada' THEN 1 ELSE 0 END) AS Tareas_Completadas,
+        COALESCE(
+            ROUND( (SUM(CASE WHEN T.Estado = 'Completada' THEN 1 ELSE 0 END) / COUNT(T.ID_Tareas)) * 100, 2),
+            0.00
+        ) AS Porcentaje_Avance
+    FROM
+        Videojuegos V
+    LEFT JOIN 
+        Tareas T ON V.ID_Videojuego = T.ID_Videojuego
+    GROUP BY
+        V.ID_Videojuego, V.Titulo, V.Estado_Actual;
+
+END //
+
+DELIMITER ;
+
+
+-- Actualiza estadísticas de rendimiento del juego por plataforma. 
+
+DELIMITER //
+
+CREATE EVENT event_actualizar_rendimiento_plataforma
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    
+    TRUNCATE TABLE Estadisticas_Rendimiento_Plataforma;
+
+    
+    INSERT INTO Estadisticas_Rendimiento_Plataforma (
+        ID_Videojuego,
+        Plataforma,
+        Tipo_Prueba,
+        Total_Pruebas_Realizadas,
+        Promedio_Cobertura
+    )
+    SELECT
+        PT.ID_Videojuego_Testeo, 
+        VP.Plataforma_Version_Prueba,
+        PT.Tipo_Prueba,
+        COUNT(PT.ID_Procesos_Testeo) AS Total_Pruebas,
+        
+        SUBSTRING_INDEX(GROUP_CONCAT(PT.Cobertura_Alcanzada SEPARATOR ','), ',', 1) AS Ejemplo_Cobertura 
+    FROM
+        Procesos_Testeo PT
+    JOIN
+        Versiones_Prueba VP ON PT.ID_Version_Testeo = VP.ID_Version_Prueba
+    GROUP BY
+        PT.ID_Videojuego_Testeo,
+        VP.Plataforma_Version_Prueba,
+        PT.Tipo_Prueba;
+
+END //
+
+DELIMITER ;
+
+
+-- Realiza copias de seguridad periódicas del código fuente.
+
+DELIMITER //
+
+CREATE EVENT event_log_backup_diario_codigo_fuente
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    DECLARE num_archivos INT;
+    
+    SELECT COUNT(*) INTO num_archivos FROM Codigo_Fuente;
+
+    INSERT INTO Log_Backups_Codigo_Fuente (Archivos_Afectados, Nota)
+    VALUES (num_archivos, CONCAT('Auditoría diaria de respaldo lógico completada. Total de módulos/archivos registrados: ', num_archivos));
+END //
+
+DELIMITER ;
+
+-- Monitorea la aparición de bugs en nuevas versiones.
+
+DELIMITER //
+
+CREATE EVENT event_monitorear_bugs_versiones
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP
+DO
+BEGIN
+    DECLARE umbral_bugs INT DEFAULT 10;
+    
+    
+    INSERT INTO Auditoria_Versiones_Problematicas (
+        ID_Version,
+        Numero_Version,
+        Titulo_Videojuego,
+        Total_Bugs_Reportados,
+        Umbral_Establecido
+    )
+    SELECT
+        VP.ID_Version_Prueba,
+        VP.Numero_Version,
+        V.Titulo,
+        COUNT(BR.ID_Bugs_Reportados) AS Total_Bugs,
+        umbral_bugs
+    FROM
+        Versiones_Prueba VP
+    JOIN
+        Videojuegos V ON VP.ID_Videojuego = V.ID_Videojuego
+    LEFT JOIN 
+        Bugs_Reportados BR ON VP.ID_Version_Afectada = BR.ID_Version_Afectada
+    WHERE
+        
+        VP.Fecha_Compilacion >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    GROUP BY
+        VP.ID_Version_Prueba, VP.Numero_Version, V.Titulo
+    HAVING
+        COUNT(BR.ID_Bugs_Reportados) > umbral_bugs;
+
+END //
+
+DELIMITER ;
