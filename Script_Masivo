@@ -1,0 +1,104 @@
+-- ######################################################
+-- Script de llenado masivo para la base de datos Mundos_Virtuales_DB
+-- ######################################################
+
+USE Mundos_Virtuales_DB;
+
+-- ------------------------------------------------------
+-- 1. Llenar la tabla Videojuegos (5 registros)
+-- ------------------------------------------------------
+INSERT INTO Videojuegos (Codigo_Unico_Videojuego, Titulo, Genero, Plataformas_Objetivo, Clasificacion, Fecha_Inicio_Desarrollo_Videojuego, Fecha_Lanzamiento_Prevista_Videojuego, Presupuesto_Asignado, Motor_Grafico_Utilizado, Equipo_Desarrollo, Estado_Actual) VALUES
+(1001, 'Aventura Cosmica', 'Aventura', 'PC, PlayStation 5', 'E10+', '2023-01-15 10:00:00', '2025-10-20', 5000000, 'Unreal Engine 5', 'Equipo Alfa', 'En desarrollo'),
+(1002, 'Batalla Zombi', 'Accion', 'Xbox Series X, PC', 'M', '2022-03-20 14:30:00', '2024-12-15', 3000000, 'Unity', 'Equipo Beta', 'Beta abierta'),
+(1003, 'Imperio Galactico', 'Estrategia', 'PC, Mac', 'T', '2024-05-01 09:00:00', '2026-03-10', 8000000, 'Motor Propio 2.0', 'Equipo Gamma', 'Concepto'),
+(1004, 'Mundo Magico RPG', 'Rol', 'PC, Switch', 'E', '2021-11-10 11:45:00', '2024-08-30', 4500000, 'Unreal Engine 4', 'Equipo Delta', 'Lanzado'),
+(1005, 'Carreras Urbanas 3D', 'Accion', 'Móvil, PC', 'E', '2023-08-01 08:00:00', '2025-05-01', 1500000, 'Unity', 'Equipo Epsilon', 'En desarrollo');
+
+-- ------------------------------------------------------
+-- 2. Llenar la tabla Miembros_Equipo (6 registros)
+-- ------------------------------------------------------
+INSERT INTO Miembros_Equipo (Codigo_Empleado, Nombre, Apellido, Especialidad, Habilidades_Especificas, Experiencia_Previa, Proyectos_Asignados, Porcentaje_Dedicacion, Rol_Cada_Proyecto) VALUES
+(2001, 'Juan', 'Perez', 'Programacion', 'C++, Redes', '5 años en Ubisoft', 'Aventura Cosmica, Batalla Zombi', '100%', 'Programador Senior'),
+(2002, 'Maria', 'Gomez', 'Arte', 'Modelado 3D, Texturas', '3 años en EA', 'Aventura Cosmica, Imperio Galactico', '80%', 'Artista 3D Lead'),
+(2003, 'Carlos', 'Rodriguez', 'Diseno', 'Diseño de niveles, UX/UI', '4 años en Blizzard', 'Batalla Zombi, Carreras Urbanas 3D', '100%', 'Diseñador Principal'),
+(2004, 'Ana', 'Martinez', 'Musica', 'Composición, SFX', 'Freelance en varios proyectos', 'Mundo Magico RPG', '50%', 'Compositora'),
+(2005, 'Pedro', 'Sanchez', 'Testing', 'QA Manual, Automatizacion', '2 años en Rockstar', 'Aventura Cosmica, Batalla Zombi', '100%', 'Tester Lead'),
+(2006, 'Sofia', 'Lopez', 'Programacion', 'IA, Gameplay', '1 año en Indie Studio', 'Aventura Cosmica', '100%', 'Programadora Junior');
+
+-- ------------------------------------------------------
+-- 3. Llenar la tabla Tareas (Ejecutar después de Miembros_Equipo y Videojuegos)
+-- NOTA: Se asume que ID_Miembros_Equipo 1 a 6 existen.
+-- NOTA: Se asume que ID_Videojuego 1 a 5 existen.
+-- NOTA: La columna `Responsable` en la tabla `Tareas` referencia a `ID_Miembros_Equipo` (no a `Miembros_Equipo.Nombre` como el nombre de la columna podría sugerir). El script SQL original usa `FOREIGN KEY (Responsable) REFERENCES Miembros_Equipo(ID_Miembro_Equipo)`.
+-- Se ha ajustado la fecha límite de la tarea a un valor nulo para coincidir con la definición de la tabla alterada a `timestamp NULL`.
+-- ------------------------------------------------------
+INSERT INTO Tareas (ID_Videojuego, Codigo_Unico_Tareas, Proyecto, Modulo_Tarea, Descripcion_Tarea, Prioridad, Estado, Responsable, Fecha_Asignacion_Tarea, Fecha_Limite_Tarea, Porcentaje_Avance, Dependencias) VALUES
+(1, 3001, 'Aventura Cosmica', 'Jugabilidad', 'Implementar sistema de combate basico', 'Alta', 'En proceso', 1, '2024-05-15 09:00:00', NULL, '50%', 'Ninguna'),
+(1, 3002, 'Aventura Cosmica', 'Graficos', 'Diseñar modelo 3D del personaje principal', 'Media', 'Completada', 2, '2024-05-10 14:00:00', '2024-06-25 17:00:00', '100%', 'Concepto Arte'),
+(2, 3003, 'Batalla Zombi', 'IA', 'Programar comportamiento de zombis basicos', 'Alta', 'Revision', 6, '2024-06-01 10:00:00', NULL, '90%', 'IA Spec'),
+(2, 3004, 'Batalla Zombi', 'Jugabilidad', 'Ajustar controles de movimiento y camara', 'Media', 'Pendiente', 3, '2024-06-20 11:00:00', NULL, '0%', 'Ninguna'),
+(4, 3005, 'Mundo Magico RPG', 'Sonido', 'Componer tema principal del juego', 'Baja', 'Completada', 4, '2024-01-01 00:00:00', '2024-03-15 12:00:00', '100%', 'Ninguna');
+
+-- ------------------------------------------------------
+-- 4. Llenar la tabla Asset_Grafico (4 registros)
+-- ------------------------------------------------------
+INSERT INTO Asset_Grafico (Codigo_Unico_Asset, Nombre_Asset, Tipo_Asset, Descripcion_Asset, Formato_Asset, Resolucion_Asset, Artista_Responsable_Asset, Version_Actual_Asset, Fecha_Ultima_Modificacion_Asset, Requisitos_Tecnicos_Asset, Estado_Aprobacion_Asset) VALUES
+(4001, 'Personaje Principal', 'Personaje', 'Modelo del heroe principal', '.fbx', '4k', 'Maria Gomez', 5, '2024-06-25 10:00:00', 'Menos de 50k poligonos', 'Aprobado'),
+(4002, 'Bosque Nivel 1', 'Escenario', 'Assets para el primer nivel del bosque', '.obj', '4096x4096', 'Maria Gomez', 1, '2024-06-15 14:30:00', 'Optimizacion para consolas', 'En revision'),
+(4003, 'Caja Madera', 'Objeto', 'Objeto interactuable destruchible', '.fbx', '512x512', 'Juan Nadie', 3, '2024-06-20 09:00:00', 'Bajo LOD', 'Aprobado'),
+(4004, 'Menu Principal UI', 'Interfaz', 'Diseño de la pantalla de inicio', '.png', '1920x1080', 'Carlos Rodriguez', 2, '2024-06-18 16:00:00', 'Compatible con multiples resoluciones', 'Pendiente');
+
+-- ------------------------------------------------------
+-- 5. Llenar la tabla Codigo_Fuente (4 registros)
+-- ------------------------------------------------------
+INSERT INTO Codigo_Fuente (Identificador_Modulo, Nombre_Codigo_Fuente, Lenguaje_Programacion, Plataforma_Codigo_Fuente, Funcionalidad_Principal, Desarrollador_Responsable_Codigo_Fuente, Numero_Lineas, Dependencias_Codigo_Fuente, Historial_versiones, Estado_Compilacion) VALUES
+('CMBT_SYS', 'CombatSystem.cpp', 'C++', 'PC, PS5', 'Logica de combate cuerpo a cuerpo', 'Juan Perez', 1500, 'PlayerController.h', 'v1.0: Inicial; v1.1: Bugs fixed', 'Compilado OK'),
+('AI_ZOM', 'ZombieAI.cs', 'C#', 'PC, Xbox', 'Comportamiento autonomo de zombis', 'Sofia Lopez', 800, 'UnityEngine.AI', 'v0.5: Prototipo; v0.6: Pathfinding', 'Warning'),
+('RENDER_ENG', 'RendererDX12.cpp', 'C++', 'PC, Xbox', 'Renderizado de graficos con DX12', 'Juan Perez', 12000, 'DirectX 12 API', 'v2.0: Optimizado', 'Compilado OK'),
+('UI_MENU', 'MainMenu.lua', 'Lua', 'Multiplataforma', 'Funcionalidad del menu principal', 'Carlos Rodriguez', 300, 'UI Engine Lib', 'v1.0: Funcional', 'Compilado OK'),
+('AI02', 'EnemyAI', 'C#', 'PC', 'Control de enemigos', 'Andres Torres', 12000, 'UnityAPI', 'v0.9 -> v1.4', 'Compilado');
+
+-- ------------------------------------------------------
+-- 6. Llenar la tabla Versiones_Prueba (3 registros)
+-- NOTA: Se asume que ID_Videojuego 1, 2, 4 existen.
+-- ------------------------------------------------------
+INSERT INTO Versiones_Prueba (ID_Videojuego, Codigo_version_Prueba, Proyecto_Version_Prueba, Numero_Version, Fecha_Compilacion, Plataforma_Version_Prueba, Caracteristicas_Implementadas, Bugs_Conocidos, Cambios_Respecto_Version_Anterior, Nota_Testers) VALUES
+(1, 6001, 'Aventura Cosmica', 0.1, '2024-02-20 18:00:00', 'PC (Windows)', 'Movimiento basico, interaccion con objetos', 'Colisiones incompletas, errores de camara', 'Primera version jugable', 'Necesita muchos ajustes de camara'),
+(2, 6002, 'Batalla Zombi', 0.5, '2024-06-22 10:00:00', 'PC (Windows)', 'IA basica de zombis, 2 armas funcionales', 'Zombis se atascan a veces', 'Mejora en el rendimiento de FPS', 'IA necesita trabajo, pero es jugable'),
+(4, 6003, 'Mundo Magico RPG', 1.0, '2024-02-25 15:00:00', 'PC (Windows)', 'Juego completo, todas las misiones principales', 'Errores menores de texto', 'Version Gold Master para lanzamiento', 'Listo para salir al mercado');
+
+-- ------------------------------------------------------
+-- 7. Llenar la tabla Bugs_Reportados (3 registros)
+-- NOTA: Se asume que ID_Version_Prueba 1 a 3 existen.
+-- ------------------------------------------------------
+INSERT INTO Bugs_Reportados (Numero_Ticket, ID_Version_Afectada, Fecha_Reporte, Modulo_Bugs_Reportados, Descripcion, Pasos_Reproducirlo, Severidad, Prioridad, Capturas_Videos, Tester_Reporta, Desarrollador_Asignado, Estado_Resolucion, Verificacion_Bug) VALUES
+(7001, 1, '2024-06-21 09:30:00', 'Graficos', 'El personaje atraviesa paredes en el nivel 1', 'Ir a la esquina norte del mapa, saltar y moverse hacia la pared', 'Alta', 1, 'video_bug_7001.mp4', 'Pedro Sanchez', 'Juan Perez', 'Abierto', 'Pendiente'),
+(7002, 2, '2024-06-23 14:00:00', 'IA', 'Los zombis se quedan quietos si el jugador salta', 'Saltar repetidamente cerca de un zombi', 'Media', 2, 'captura_bug_7002.jpg', 'Pedro Sanchez', 'Sofia Lopez', 'En proceso', 'Pendiente'),
+(7003, 3, '2024-08-26 10:00:00', 'Interfaz', 'Error tipografico en la descripcion de un item', 'Abrir inventario, seleccionar "Pocion Mana"', 'Baja', 3, 'captura_bug_7003.jpg', 'Ana Testera', 'Carlos Rodriguez', 'Completado', 'Verificado');
+
+-- ------------------------------------------------------
+-- 8. Llenar la tabla Procesos_Testeo (2 registros)
+-- NOTA: Se asume que ID_Videojuego 1 y 2 existen.
+-- NOTA: Se asume que ID_Version_Testeo 1 y 2 existen.
+-- NOTA: ID_Videojuego_Testeo referencia a `ID_Videojuego` (INT), no a VARCHAR(40) como se definió. Se usará el ID numérico.
+-- ------------------------------------------------------
+INSERT INTO Procesos_Testeo (Codigo_Procesos_testeo, ID_Videojuego_Testeo, ID_Version_Testeo, Tipo_Prueba, Fecha_Inicio_Testeo, Fecha_Fin_Testeo, Equipo_Asignado, Cobertura_Alcanzada, Metricas_Obtenidas, Resultados_Finales) VALUES
+(8001, 1, 1, 'Funcional', '2024-06-20 18:00:00', '2024-06-21 17:00:00', 'Equipo QA Principal', '80% de funcionalidades basicas', 'FPS estables a 60, uso CPU normal', 'Muchos bugs en colisiones, jugabilidad basica OK'),
+(8002, 2, 2, 'Jugabilidad', '2024-06-22 10:00:00', '2024-06-24 10:00:00', 'Equipo QA Principal', '100% de mecanicas de combate', 'Curva dificultad ajustada', 'Sensacion de juego buena, IA necesita mejoras');
+
+-- ------------------------------------------------------
+-- 9. Llenar la tabla Distribuciones_Digitales (1 registro)
+-- NOTA: Se asume que ID_Videojuego 4 existe.
+-- NOTA: Se asume que ID_Version_Distribucion 3 existe.
+-- NOTA: ID_Videojuego_Distribucion referencia a `ID_Videojuego` (INT), no a VARCHAR(40) como se definió. Se usará el ID numérico.
+-- ------------------------------------------------------
+INSERT INTO Distribuciones_Digitales (Codigo_Distribucion_Digital, Plataforma_Distribucion, ID_Videojuego_Distribucion, ID_Version_Distribucion, Fecha_Publicacion, Tamaño_GB, Requisitos_Minimos_Recomendados, Precio, Descuentos_Aplicados, Valoraciones_Recibidas, Numero_Descargas) VALUES
+(9001, 'Steam', 4, 3, '2024-08-30 09:00:00', '15GB', 'Minimos: i5, 8GB RAM, GTX 1060; Recomendados: i7, 16GB RAM, RTX 2070', 40, 0, 'Muy Positivas (85%)', 15000);
+
+-- ------------------------------------------------------
+-- 10. Llenar la tabla Usuarios_Registrados (3 registros)
+-- ------------------------------------------------------
+INSERT INTO Usuarios_Registrados (ID_unico_Usuarios, Nombre_usuario, Correo, Fecha_Registro, Plataforma_Utiliza, Juegos_Adquiridos, Tiempo_Juego, Logros_Desbloqueados, Compras_Realizadas, Preferencias_Usuario) VALUES
+(10001, 'JugadorPro99', 'jugador@example.com', '2024-08-30 10:00:00', 'Steam', 'Mundo Magico RPG, Batalla Zombi', '15:30:00', 'Primer Nivel, Jefe Derrotado', 'DLC Mision Secreta', 'RPG, Accion, Dificultad Alta'),
+(10002, 'CasualGamer', 'casual@example.com', '2024-09-01 14:00:00', 'Epic Games', 'Aventura Cosmica', '02:15:00', 'Ninguno', 'Ninguna', 'Aventura, Facil'),
+(10003, 'EstrategiaMaster', 'estratega@example.com', '2024-09-05 08:00:00', 'Steam', 'Imperio Galactico', '45:00:00', 'Conquistador Galactico', 'Expansion 1, Expansion 2', 'Estrategia profunda, Sci-Fi');
