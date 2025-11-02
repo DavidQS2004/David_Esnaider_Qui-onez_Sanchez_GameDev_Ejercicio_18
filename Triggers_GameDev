@@ -1,0 +1,156 @@
+-- Actualiza el porcentaje de avance de un proyecto según tareas.
+
+ALTER TABLE Videojuegos ADD COLUMN Porcentaje_Avance DECIMAL(5,2) DEFAULT 0.00;
+
+DELIMITER //
+
+
+CREATE TRIGGER tr_after_update_tarea
+AFTER UPDATE ON Tareas
+FOR EACH ROW
+BEGIN
+
+    IF OLD.Estado <> NEW.Estado OR OLD.ID_Videojuego <> NEW.ID_Videojuego THEN
+        IF OLD.ID_Videojuego <> NEW.ID_Videojuego THEN
+            CALL CalcularAvanceProyecto(OLD.ID_Videojuego);
+        END IF;
+        CALL CalcularAvanceProyecto(NEW.ID_Videojuego);
+    END IF;
+END //
+
+CREATE TRIGGER tr_after_delete_tarea
+AFTER DELETE ON Tareas
+FOR EACH ROW
+BEGIN
+    CALL CalcularAvanceProyecto(OLD.ID_Videojuego);
+END //
+
+DELIMITER ;
+
+
+-- Notifica cuando se completan tareas de las que dependen otras.
+
+
+-- Actualiza el historial de versiones de un módulo o asset.
+
+DELIMITER //
+
+CREATE TRIGGER tr_actualizar_historial_asset_grafico
+BEFORE UPDATE ON Asset_Grafico
+FOR EACH ROW
+BEGIN
+    DECLARE cambios_detectados TEXT DEFAULT '';
+
+
+    IF OLD.Version_Actual_Asset <> NEW.Version_Actual_Asset THEN
+        SET cambios_detectados = CONCAT(cambios_detectados, 'Versión actualizada de ', OLD.Version_Actual_Asset, ' a ', NEW.Version_Actual_Asset, '. ');
+    END IF;
+
+    IF OLD.Estado_Aprobacion_Asset <> NEW.Estado_Aprobacion_Asset THEN
+        SET cambios_detectados = CONCAT(cambios_detectados, 'Estado de aprobación cambiado de ', OLD.Estado_Aprobacion_Asset, ' a ', NEW.Estado_Aprobacion_Asset, '. ');
+    END IF;
+
+
+    IF cambios_detectados <> '' THEN
+        INSERT INTO Historial_Versiones (
+            Tipo_Recurso, 
+            ID_Recurso, 
+            Version_Anterior, 
+            Version_Nueva, 
+            Campo_Modificado, 
+            Detalles_Cambio
+        ) VALUES (
+            'Asset_Grafico', 
+            NEW.ID_Asset_Grafico, 
+            OLD.Version_Actual_Asset, 
+            NEW.Version_Actual_Asset, 
+            'Multiples_Campos',
+            cambios_detectados
+        );
+    END IF;
+END //
+
+DELIMITER ;
+
+
+-- Actualiza estadísticas de bugs por módulo y desarrollador.
+DELIMITER //
+
+CREATE PROCEDURE ActualizarEstadisticasBugs()
+BEGIN
+
+    TRUNCATE TABLE Estadisticas_Bugs_Resumen;
+
+
+    INSERT INTO Estadisticas_Bugs_Resumen (
+        Modulo, 
+        Desarrollador_Asignado, 
+        Total_Bugs_Abiertos, 
+        Total_Bugs_Cerrados, 
+        Total_Bugs_Totales
+    )
+    SELECT
+        Modulo_Bugs_Reportados AS Modulo,
+        Desarrollador_Asignado,
+        SUM(CASE WHEN Estado_Resolucion IN ('Reportado', 'Asignado', 'En Progreso') THEN 1 ELSE 0 END) AS Bugs_Abiertos,
+        SUM(CASE WHEN Estado_Resolucion IN ('Resuelto', 'Verificado', 'Cerrado') THEN 1 ELSE 0 END) AS Bugs_Cerrados,
+        COUNT(*) AS Total_Bugs
+    FROM 
+        Bugs_Reportados
+    WHERE
+        Desarrollador_Asignado IS NOT NULL AND Desarrollador_Asignado != ''
+    GROUP BY 
+        Modulo_Bugs_Reportados, 
+        Desarrollador_Asignado;
+
+END //
+
+DELIMITER ;
+
+
+-- Verifica la compatibilidad de assets con plataformas objetivo.
+
+ALTER TABLE Asset_Grafico ADD COLUMN ID_Videojuego INT(10) NULL;
+ALTER TABLE Asset_Grafico ADD CONSTRAINT fk_asset_videojuego
+FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego);
+
+ALTER TABLE Codigo_Fuente ADD COLUMN ID_Videojuego INT(10) NULL;
+ALTER TABLE Codigo_Fuente ADD CONSTRAINT fk_codigo_videojuego
+FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego);
+
+
+DELIMITER //
+
+CREATE TRIGGER tr_verificar_compatibilidad_asset
+AFTER INSERT ON Asset_Grafico
+FOR EACH ROW
+BEGIN
+    DECLARE v_plataformas_objetivo VARCHAR(20);
+    DECLARE v_motivo_incompatibilidad TEXT DEFAULT '';
+    
+    
+    SELECT Plataformas_Objetivo INTO v_plataformas_objetivo
+    FROM Videojuegos
+    WHERE ID_Videojuego = NEW.ID_Videojuego;
+
+
+
+    IF v_plataformas_objetivo IS NOT NULL THEN
+        IF NEW.Formato_Asset = 'FBX' AND v_plataformas_objetivo LIKE '%Movil%' THEN
+            SET v_motivo_incompatibilidad = 'El formato FBX puede no ser óptimo o compatible con plataformas móviles.';
+        END IF;
+        
+        
+
+
+        IF v_motivo_incompatibilidad <> '' THEN
+            INSERT INTO Registros_Incompatibilidad (
+                ID_Asset, Tipo_Recurso, Plataformas_Objetivo, Motivo
+            ) VALUES (
+                NEW.ID_Asset_Grafico, 'Asset_Grafico', v_plataformas_objetivo, v_motivo_incompatibilidad
+            );
+        END IF;
+    END IF;
+END //
+
+DELIMITER ;
