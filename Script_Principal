@@ -1,0 +1,277 @@
+-- Se elimina la database si existe.
+DROP DATABASE if exists GameDev_DB;
+
+-- Se crea la database.
+CREATE DATABASE if NOT EXISTS GameDev_DB;
+
+-- Se usa la database.
+USE GameDev_DB;
+
+-- Se crea la tabla videojuegos
+CREATE TABLE Videojuegos(
+ID_Videojuego INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Codigo_Unico_Videojuego INT (10) NOT NULL UNIQUE,
+Titulo VARCHAR (40) NOT NULL UNIQUE,
+Genero ENUM('Accion', 'Aventura', 'Estrategia', 'Rol') NOT NULL,
+Plataformas_Objetivo VARCHAR (20) NOT NULL,
+Clasificacion VARCHAR (10) NOT NULL,
+Fecha_Inicio_Desarrollo_Videojuego TIMESTAMP NOT NULL UNIQUE,
+Fecha_Lanzamiento_Prevista_Videojuego date null UNIQUE,
+Presupuesto_Asignado INT (10) NOT NULL,
+Motor_Grafico_Utilizado VARCHAR (20) NOT NULL,
+Equipo_Desarrollo VARCHAR (40) NOT NULL,
+Estado_Actual VARCHAR (20) NOT NULL
+);
+
+-- se crea la tabla miembros del equipo
+CREATE TABLE Miembros_Equipo(
+ID_Miembros_Equipo INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Codigo_Empleado INT (10) NOT NULL,
+Nombre VARCHAR (30) NOT NULL,
+Apellido VARCHAR (30) NOT NULL, 
+Especialidad ENUM('Programacion', 'Arte', 'Diseno', 'Musica', 'Testing') NOT NULL,
+Habilidades_Especificas VARCHAR (40) NOT NULL,
+Experiencia_Previa TEXT not NULL,
+Proyectos_Asignados VARCHAR (40) NOT NULL,
+Porcentaje_Dedicacion VARCHAR (20) NOT NULL,
+Rol_Cada_Proyecto VARCHAR (40) NOT NULL
+);
+
+-- Se crea la tabla tareas
+CREATE TABLE Tareas (
+ID_Tareas INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ID_Videojuego INT (10) NOT NULL,
+Codigo_Unico_Tareas INT (10) NOT NULL UNIQUE,
+Proyecto VARCHAR (20) NOT NULL,
+Modulo_Tarea ENUM('Jugabilidad', 'Graficos', 'Sonido', 'IA') NOT NULL,
+Descripcion_Tarea TEXT NOT NULL,
+Prioridad VARCHAR (20)NOT NULL,
+Estado ENUM('Pendiente', 'En proceso', 'Revision', 'Completada') NOT NULL,
+Responsable VARCHAR (40)NOT NULL,
+Fecha_Asignacion_Tarea TIMESTAMP NOT NULL,
+Fecha_Limite_Tarea timestamp NULL,
+Porcentaje_Avance VARCHAR (10) NOT NULL,
+Dependencias VARCHAR (20) NOT NULL,
+FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego),
+FOREIGN KEY (Responsable) REFERENCES Miembros_Equipo(ID_Miembro_Equipo)
+);
+
+-- se crea la tabla assets gráficos.
+CREATE TABLE Asset_Grafico(
+ID_Asset_Grafico INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Codigo_Unico_Asset INT (10) UNIQUE NOT NULL,
+Nombre_Asset VARCHAR (20) NOT NULL,
+Tipo_Asset ENUM('Personaje', 'Escenario', 'Objeto', 'Interfaz') NOT NULL,
+Descripcion_Asset TEXT NULL,
+Formato_Asset VARCHAR (15) NOT NULL,
+Resolucion_Asset VARCHAR (20) NOT NULL,
+Artista_Responsable_Asset VARCHAR (40) NOT NULL,
+Version_Actual_Asset INT (20) NOT NULL,
+Fecha_Ultima_Modificacion_Asset TIMESTAMP NOT NULL,
+Requisitos_Tecnicos_Asset TEXT NOT NULL,
+Estado_Aprobacion_Asset VARCHAR(20) NOT NULL
+);
+
+-- Se crea la tabla Codigo de fuente.
+CREATE TABLE Codigo_Fuente(
+ID_Codigo_Fuente INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Identificador_Modulo VARCHAR(15) NOT NULL,
+Nombre_Codigo_Fuente VARCHAR (40) NOT NULL,
+Lenguaje_Programacion VARCHAR (20) NOT NULL,
+Plataforma_Codigo_Fuente VARCHAR (40) NOT NULL,
+Funcionalidad_Principal VARCHAR (40) NOT NULL,
+Desarrollador_Responsable_Codigo_Fuente VARCHAR (40) NOT NULL,
+Numero_Lineas INT (10) NOT NULL,
+Dependencias_Codigo_Fuente VARCHAR(40) NOT NULL,
+Historial_versiones TEXT NOT NULL,
+Estado_Compilacion VARCHAR (20) NOT NULL
+);
+
+-- Se crea la tabla versiones de prueba.
+CREATE TABLE Versiones_Prueba(
+ID_Version_Prueba INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ID_Videojuego INT(10) NOT NULL,
+Codigo_version_Prueba INT (10) NOT NULL,
+Proyecto_Version_Prueba VARCHAR (40) NOT NULL,
+Numero_Version INT (10) NOT NULL,
+Fecha_Compilacion TIMESTAMP NOT NULL,
+Plataforma_Version_Prueba VARCHAR (40) NOT NULL,
+Caracteristicas_Implementadas TEXT (200) NOT NULL,
+Bugs_Conocidos TEXT NOT NULL,
+Cambios_Respecto_Version_Anterior TEXT (400),
+Nota_Testers TEXT NOT NULL,
+FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego)
+);
+
+-- Se crea la tabla bugs reportados.
+CREATE TABLE Bugs_Reportados(
+ID_Bugs_Reportados INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Numero_Ticket INT(10) NOT NULL,
+ID_Version_Afectada INT(10) NOT NULL,
+Fecha_Reporte TIMESTAMP NOT NULL,
+Modulo_Bugs_Reportados VARCHAR (15) NOT NULL,
+Descripcion TEXT NOT NULL,
+Pasos_Reproducirlo TEXT NOT NULL,
+Severidad VARCHAR(40) NOT NULL,
+Prioridad INT (1) NOT NULL,
+Capturas_Videos VARCHAR(100) NOT NULL,
+Tester_Reporta VARCHAR (40) NOT NULL,
+Desarrollador_Asignado VARCHAR (40) NOT NULL,
+Estado_Resolucion VARCHAR (20) NOT NULL,
+Verificacion_Bug VARCHAR (20) NOT NULL,
+FOREIGN KEY (ID_Version_Afectada) REFERENCES Versiones_Prueba(ID_Version_Prueba)
+);
+
+-- Se crea la tabla procesos de testeo.
+CREATE TABLE Procesos_Testeo(
+ID_Procesos_Testeo INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Codigo_Procesos_testeo INT(10) NOT NULL,
+ID_Videojuego_Testeo VARCHAR (40) NOT NULL,
+ID_Version_Testeo INT (10) NOT NULL,
+Tipo_Prueba ENUM ('Funcional', 'Rendimiento', 'Compatibilidad', 'Jugabilidad') NOT NULL,
+Fecha_Inicio_Testeo TIMESTAMP NOT NULL,
+Fecha_Fin_Testeo TIMESTAMP NOT NULL,
+Equipo_Asignado VARCHAR (40) NOT NULL,
+Cobertura_Alcanzada VARCHAR (40) NOT NULL,
+Metricas_Obtenidas TEXT NOT NULL,
+Resultados_Finales TEXT NOT NULL,
+FOREIGN KEY (ID_Videojuego_Testeo) REFERENCES Videojuegos(ID_Videojuego),
+FOREIGN KEY (ID_Version_Testeo) REFERENCES Versiones_Prueba(ID_Version_Prueba)
+);
+
+-- Se crea la tabla distribuciones digitales.
+CREATE TABLE Distribuciones_Digitales(
+ID_Distribuciones_Digitales INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+Codigo_Distribucion_Digital INT (10) NOT NULL,
+Plataforma_Distribucion VARCHAR (10) NOT NULL,
+ID_Videojuego_Distribucion VARCHAR (40) NOT NULL,
+ID_Version_Distribucion INT (10) NOT NULL,
+Fecha_Publicacion TIMESTAMP NOT NULL,
+Tamaño_GB VARCHAR(10) NOT NULL,
+Requisitos_Minimos_Recomendados text NOT NULL,
+Precio INT (10) NOT NULL,
+Descuentos_Aplicados INT (10) NOT NULL,
+Valoraciones_Recibidas TEXT NOT NULL,
+Numero_Descargas INT(10) NOT NULL,
+FOREIGN KEY (ID_Videojuego_Distribucion) REFERENCES Videojuegos(ID_Videojuego),
+FOREIGN KEY (ID_Version_Distribucion) REFERENCES Versiones_Prueba(ID_Version_Prueba)
+);
+
+-- Se crea la tabla de usuarios registrados.
+CREATE TABLE Usuarios_Registrados (
+ID_Usuarios_Registrados INT (10) UNIQUE NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ID_unico_Usuarios INT(10) NOT NULL,
+Nombre_usuario VARCHAR (40) NOT NULL,
+Correo VARCHAR (100) NOT NULL,
+Fecha_Registro TIMESTAMP NOT NULL,
+Plataforma_Utiliza VARCHAR (10) NOT NULL,
+Juegos_Adquiridos TEXT NOT NULL,
+Tiempo_Juego TIME NOT NULL,
+Logros_Desbloqueados TEXT NOT NULL,
+Compras_Realizadas TEXT NOT NULL,
+Preferencias_Usuario VARCHAR (100) NOT NULL
+);
+
+-- Se crea la tabla historial de versiones
+
+CREATE TABLE Historial_Versiones (
+ID_Historial INT AUTO_INCREMENT PRIMARY KEY,
+Tipo_Recurso ENUM('Asset_Grafico', 'Codigo_Fuente') NOT NULL,
+ID_Recurso INT NOT NULL,
+Version_Anterior VARCHAR(50),
+Version_Nueva VARCHAR(50) NOT NULL,
+Campo_Modificado VARCHAR(50) NOT NULL,
+Fecha_Modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+Detalles_Cambio TEXT
+);
+
+-- Se crea la Tabla notificaciones dependencias
+
+CREATE TABLE Notificaciones_Dependencias (
+ID_Notificacion INT (10) AUTO_INCREMENT PRIMARY KEY,
+ID_Tarea_Completada INT (10) NOT NULL,
+ID_Tarea_Dependiente INT (10)NOT NULL,
+Mensaje TEXT NOT NULL,
+Fecha_Hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+Leida BOOLEAN DEFAULT FALSE,
+FOREIGN KEY (ID_Tarea_Completada) REFERENCES Tareas(ID_Tareas),
+FOREIGN KEY (ID_Tarea_Dependiente) REFERENCES Tareas(ID_Tareas)
+);
+
+-- Se crea la tabla estadisticas de bugs resumen
+CREATE TABLE Estadisticas_Bugs_Resumen (
+ID_Estadistica INT AUTO_INCREMENT PRIMARY KEY,
+Modulo VARCHAR(15) NOT NULL,
+Desarrollador_Asignado VARCHAR(40) NOT NULL,
+Total_Bugs_Abiertos INT DEFAULT 0,
+Total_Bugs_Cerrados INT DEFAULT 0,
+Total_Bugs_Totales INT DEFAULT 0,
+Fecha_Ultima_Actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+UNIQUE KEY idx_modulo_desarrollador (Modulo, Desarrollador_Asignado)
+);
+
+-- Se crea la tabla registros incopatibilidad.
+CREATE TABLE Registros_Incompatibilidad (
+ID_Registro INT AUTO_INCREMENT PRIMARY KEY,
+ID_Asset INT NOT NULL,
+Tipo_Recurso ENUM('Asset_Grafico', 'Codigo_Fuente') NOT NULL,
+Plataformas_Objetivo VARCHAR(255) NOT NULL,
+Motivo TEXT NOT NULL,
+Fecha_Registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Se crea la tabla alerta de tareas proximas a vencer.
+CREATE TABLE Alerta_Tareas_Proximas_Vencer (
+ID_Alerta INT AUTO_INCREMENT PRIMARY KEY,
+ID_Tarea INT NOT NULL,
+Descripcion_Tarea TEXT NOT NULL,
+Fecha_Limite TIMESTAMP NULL,
+Responsable VARCHAR(40) NOT NULL,
+Mensaje TEXT NOT NULL,
+Fecha_Generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Se crea la tabla reportes avance semanal.
+CREATE TABLE Reportes_Avance_Semanal (
+ID_Reporte INT AUTO_INCREMENT PRIMARY KEY,
+Fecha_Reporte DATE NOT NULL,
+ID_Videojuego INT NOT NULL,
+Titulo_Videojuego VARCHAR(40) NOT NULL,
+Estado_Actual VARCHAR(20) NOT NULL,
+Total_Tareas INT NOT NULL,
+Tareas_Completadas INT NOT NULL,
+Porcentaje_Avance DECIMAL(5,2) NOT NULL,
+FOREIGN KEY (ID_Videojuego) REFERENCES Videojuegos(ID_Videojuego)
+);
+
+-- Se crea la tabla estadisticas rendimiento plataforma.
+CREATE TABLE Estadisticas_Rendimiento_Plataforma (
+ID_Estadistica INT AUTO_INCREMENT PRIMARY KEY,
+ID_Videojuego INT NOT NULL,
+Plataforma VARCHAR(40) NOT NULL,
+Tipo_Prueba ENUM ('Funcional', 'Rendimiento', 'Compatibilidad', 'Jugabilidad') NOT NULL,
+Total_Pruebas_Realizadas INT DEFAULT 0,
+Promedio_Cobertura VARCHAR(40), 
+Fecha_Ultima_Actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+UNIQUE KEY idx_juego_plataforma_tipo (ID_Videojuego, Plataforma, Tipo_Prueba)
+);
+
+-- Se crea la tabla log backups codigo fuente.
+CREATE TABLE Log_Backups_Codigo_Fuente (
+ID_Log INT AUTO_INCREMENT PRIMARY KEY,
+Fecha_Backup TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+Archivos_Afectados INT,
+Nota TEXT
+);
+
+-- Se crea la tabla auditoria versiones problematicas.
+CREATE TABLE Auditoria_Versiones_Problematicas (
+ID_Auditoria INT AUTO_INCREMENT PRIMARY KEY,
+ID_Version INT NOT NULL,
+Numero_Version INT NOT NULL,
+Titulo_Videojuego VARCHAR(40) NOT NULL,
+Total_Bugs_Reportados INT NOT NULL,
+Umbral_Establecido INT NOT NULL,
+Fecha_Auditoria TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
