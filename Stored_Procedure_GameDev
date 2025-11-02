@@ -1,0 +1,224 @@
+USE gamedev_db;
+
+-- Crea un nuevo proyecto de videojuego con su equipo inicial.
+DELIMITER //
+
+CREATE PROCEDURE sp_Nuevo_Proyecto(
+    IN p_Codigo_Unico_Videojuego INT,
+    IN p_Titulo VARCHAR(40),
+    IN p_Genero ENUM('Accion', 'Aventura', 'Estrategia', 'Rol'),
+    IN p_Plataformas_Objetivo VARCHAR(20),
+    IN p_Clasificacion VARCHAR(10),
+    IN p_Fecha_Lanzamiento_Prevista_Videojuego DATE,
+    IN p_Presupuesto_Asignado INT,
+    IN p_Motor_Grafico_Utilizado VARCHAR(20),
+    IN p_Equipo_Desarrollo VARCHAR(40),
+    IN p_Estado_Actual VARCHAR(20)
+)
+BEGIN
+    INSERT INTO Videojuegos(
+        Codigo_Unico_Videojuego,
+        Titulo,
+        Genero,
+        Plataformas_Objetivo,
+        Clasificacion,
+        Fecha_Inicio_Desarrollo_Videojuego, 
+        Fecha_Lanzamiento_Prevista_Videojuego,
+        Presupuesto_Asignado,
+        Motor_Grafico_Utilizado,
+        Equipo_Desarrollo,
+        Estado_Actual)
+		  VALUES(
+        p_Codigo_Unico_Videojuego,
+        p_Titulo,
+        p_Genero,
+        p_Plataformas_Objetivo,
+        p_Clasificacion,
+        CURRENT_TIMESTAMP,
+        p_Fecha_Lanzamiento_Prevista_Videojuego,
+        p_Presupuesto_Asignado,
+        p_Motor_Grafico_Utilizado,
+        p_Equipo_Desarrollo,
+        p_Estado_Actual
+    );
+
+END //
+DELIMITER ;
+
+
+-- Asigna una tarea específica a un miembro del equipo.
+DELIMITER //
+
+CREATE PROCEDURE sp_Asignar_Tarea(
+    IN p_ID_Videojuego INT,
+    IN p_Codigo_Unico_Tareas INT,
+    IN p_Proyecto VARCHAR(20),
+    IN p_Modulo_Tarea ENUM('Jugabilidad', 'Graficos', 'Sonido', 'IA'),
+    IN p_Descripcion_Tarea TEXT,
+    IN p_Prioridad VARCHAR(20),
+    IN p_Estado ENUM('Pendiente', 'En proceso', 'Revision', 'Completada'), 
+    IN p_ID_Miembros_Equipo_Responsable INT,
+    IN p_Fecha_Limite_Tarea TIMESTAMP,
+    IN p_Porcentaje_Avance VARCHAR(10),
+    IN p_Dependencias VARCHAR(20)
+)
+BEGIN
+    INSERT INTO Tareas (
+        ID_Videojuego,
+        Codigo_Unico_Tareas,
+        Proyecto,
+        Modulo_Tarea,
+        Descripcion_Tarea,
+        Prioridad,
+        Estado,
+        Responsable,
+        Fecha_Asignacion_Tarea,
+        Fecha_Limite_Tarea,
+        Porcentaje_Avance,
+        Dependencias)
+		  VALUES(
+        p_ID_Videojuego,
+        p_Codigo_Unico_Tareas,
+        p_Proyecto,
+        p_Modulo_Tarea,
+        p_Descripcion_Tarea,
+        p_Prioridad,
+        p_Estado,
+        CURRENT_TIMESTAMP,
+        p_Fecha_Limite_Tarea,
+        p_Porcentaje_Avance,
+        p_Dependencias
+    );
+END //
+
+DELIMITER ;
+
+
+--  Registra una nueva versión para pruebas con sus características. 
+
+DELIMITER //
+
+CREATE PROCEDURE sp_Registrar_Nueva_Version(
+    IN p_ID_Videojuego INT,
+    IN p_Codigo_version_Prueba INT,
+    IN p_Plataforma_Version_Prueba VARCHAR(40),
+    IN p_Caracteristicas_Implementadas TEXT,
+    IN p_Bugs_Conocidos TEXT,
+    IN p_Cambios_Respecto_Version_Anterior TEXT,
+    IN p_Nota_Testers TEXT
+)
+BEGIN
+
+    INSERT INTO Versiones_Prueba (
+        ID_Videojuego,
+        Codigo_version_Prueba,
+        Proyecto_Version_Prueba,
+        Numero_Version,
+        Fecha_Compilacion,
+        Plataforma_Version_Prueba,
+        Caracteristicas_Implementadas,
+        Bugs_Conocidos,
+        Cambios_Respecto_Version_Anterior,
+        Nota_Testers)
+		  VALUES(
+        p_ID_Videojuego,
+        p_Codigo_version_Prueba,
+        v_Proyecto_Titulo,
+        v_Proximo_Numero_Version,
+        CURRENT_TIMESTAMP,
+        p_Plataforma_Version_Prueba,
+        p_Caracteristicas_Implementadas,
+        p_Bugs_Conocidos,
+        p_Cambios_Respecto_Version_Anterior,
+        p_Nota_Testers
+    );
+
+END //
+
+DELIMITER ;
+
+-- Gestiona reportes de bugs asignando desarrolladores.
+DELIMITER //
+
+CREATE PROCEDURE sp_Gestionar_Bug(
+    IN p_Numero_Ticket INT,
+    IN p_ID_Version_Afectada INT,
+    IN p_Modulo_Bugs_Reportados VARCHAR(15),
+    IN p_Descripcion TEXT,
+    IN p_Pasos_Reproducirlo TEXT,
+    IN p_Severidad VARCHAR(40),
+    IN p_Prioridad INT,
+    IN p_Capturas_Videos VARCHAR(100),
+    IN p_Tester_Reporta VARCHAR(40),
+    IN p_ID_Desarrollador_Asignado INT
+)
+BEGIN
+    INSERT INTO Bugs_Reportados (
+        Numero_Ticket,
+        ID_Version_Afectada,
+        Fecha_Reporte,
+        Modulo_Bugs_Reportados,
+        Descripcion,
+        Pasos_Reproducirlo,
+        Severidad,
+        Prioridad,
+        Capturas_Videos,
+        Tester_Reporta,
+        Estado_Resolucion,
+        Verificacion_Bug)
+		  VALUES(
+        p_Numero_Ticket,
+        p_ID_Version_Afectada,
+        CURRENT_TIMESTAMP, 
+        p_Modulo_Bugs_Reportados,
+        p_Descripcion,
+        p_Pasos_Reproducirlo,
+        p_Severidad,
+        p_Prioridad,
+        p_Capturas_Videos,
+        p_Tester_Reporta
+    );
+END//
+DELIMITER ;
+
+-- Gestiona el ciclo de vida de un asset gráfico.
+DELIMITER //
+
+CREATE PROCEDURE sp_gestionar_ciclo_vida_asset(
+    IN p_Codigo_Unico_Asset INT,
+    IN p_Nombre_Asset VARCHAR(20),
+    IN p_Tipo_Asset ENUM('Personaje', 'Escenario', 'Objeto', 'Interfaz'),
+    IN p_Descripcion_Asset TEXT,
+    IN p_Formato_Asset VARCHAR(15),
+    IN p_Resolucion_Asset VARCHAR(20),
+    IN p_Artista_Responsable_Asset VARCHAR(40),
+    IN p_Requisitos_Tecnicos_Asset TEXT,
+    IN p_Estado_Aprobacion_Asset VARCHAR(20)
+)
+BEGIN
+        INSERT INTO Asset_Grafico (
+            Codigo_Unico_Asset,
+            Nombre_Asset,
+            Tipo_Asset,
+            Descripcion_Asset,
+            Formato_Asset,
+            Resolucion_Asset,
+            Artista_Responsable_Asset,
+            Version_Actual_Asset,
+            Fecha_Ultima_Modificacion_Asset,
+            Requisitos_Tecnicos_Asset,
+            Estado_Aprobacion_Asset)
+				VALUES(
+            p_Codigo_Unico_Asset,
+            p_Nombre_Asset,
+            p_Tipo_Asset,
+            p_Descripcion_Asset,
+            p_Formato_Asset,
+            p_Resolucion_Asset,
+            p_Artista_Responsable_Asset,
+            CURRENT_TIMESTAMP,
+            p_Requisitos_Tecnicos_Asset,
+            p_Estado_Aprobacion_Asset
+        );
+END //
+DELIMITER ;
